@@ -45,7 +45,7 @@ In this section we provide an overview of our algorithm and system design. We be
 
 ## 4.1. Strands as Features
 
-<img src="../res/[Zeek] Binary Similarity Detection Using Machine Learning_2018_Figure1.png">
+<img src="../res/Zeek - Binary Similarity Detection Using Machine Learning_2018_Figure1.png">
 
 Figure 1: Decomposition to strands.
 
@@ -62,7 +62,7 @@ Previous work [5, 13] has put effort in detecting compilerinduced binary code an
 
 ## 4.2. prov2vec
 
-<img src="../res/[Zeek] Binary Similarity Detection Using Machine Learning_2018_Figure2.png">
+<img src="../res/Zeek - Binary Similarity Detection Using Machine Learning_2018_Figure2.png">
 
 Figure 2: Procedure to vector transformation stages.
 
@@ -134,7 +134,7 @@ Finally, we build our full database by shuffling the union of the positively and
 
 For estimating the similarity score of a pair of vectors, we build a deep learning classifier using TensorFlow [1]. Our model is comprised of an input layer, two fully-connected hidden layers, and a softmax output layer, as shown in Figure 4.
 
-<img src="../res/[Zeek] Binary Similarity Detection Using Machine Learning_2018_Figure4.png">
+<img src="../res/Zeek - Binary Similarity Detection Using Machine Learning_2018_Figure4.png">
 Figure 4: Our neural network skeleton.
 
 The input layer is comprised of 2×2<sup>b</sup> neurons, corresponding to the two vectors that represent the two input procedures. The first and the second hidden layers are of sizes _L1_ and _L2_, respectively. Finally, the output is a 2-neuron softmax function, representing the probability of similarity between the code sections that generated the input vectors. Except for the output layer, all the activation functions in the network are tanh. We train the model using crossentropy cost function, dropout regularization of 0.1, batch size of 32 and 3 passes over the data (epochs). 
@@ -147,7 +147,7 @@ We evaluate our approach and compare our results with GitZ [5], the fastest stat
 
 MD5 processes text into a fixed-length output of 128 bit; however, a 2<sup>128</sup> -length vector is much longer than we need. Therefore we fold the hash values (using modulo) thus defacto reducing the size of the hash. The hash size determines a trade-off: high values (longer input vectors) mean longer representation for each procedure, which may cost in overfitting and increased training time. On the other hand, low values (shorter input vectors) might create collisions in the procedure representation and omit imperative information from the classifier (underfit).
 
-<img src="../res/[Zeek] Binary Similarity Detection Using Machine Learning_2018_Figure5.png">
+<img src="../res/Zeek - Binary Similarity Detection Using Machine Learning_2018_Figure5.png">
 Figure 5: Hash size exploration results.
 
 For finding the optimal hash size, we explore various values and fit a classifier that performs best for the each of the examined values on a toy dataset. The toy dataset consists of code drawn from four applications (OpenSSL, git, util-linux and Apache Mesos) which we compile using all our x86_64 compilers (see Figure 3b) with the -O2 optimization level. The parameters that we fit are _L1_, _L2_, and dropout rate.
@@ -158,7 +158,7 @@ We test each classifier on three test projects (coreutils, wget, tar) by conduct
 
 Given the results of the previous section, we choose a 10bit MD5 hash size, configure our neural network with the parameters that optimized the performance of 2<sup>10</sup> procedure representation ( _L1_ = 512 and _L2_ = 128), use data gathered from all of the projects listed in Table 3a, and train a cross{compiler, version, optimization} binary similarity predictor.
 
-<img src="../res/[Zeek] Binary Similarity Detection Using Machine Learning_2018_Figure6.png">
+<img src="../res/Zeek - Binary Similarity Detection Using Machine Learning_2018_Figure6.png">
 
 Figure 6: CROC score of the all vs. all experiments, for each of the projects in the test set.
 
