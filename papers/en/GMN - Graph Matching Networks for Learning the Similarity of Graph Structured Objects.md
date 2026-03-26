@@ -67,7 +67,7 @@ $`m_{j \to i} = f_{message} (h_i^{(t)}, h_j^{(t)}, e_{ij}) `$
 
 $`\{h_i^{(t+1)}\} = f_{node}(h_i^{(t)}, \sum_{j:(j,i) \in E} m_{j \to i})`$
 
-Here $`f_{message}`$ is typically an MLP on the concatenated inputs, and _f_ node can be either an MLP or a recurrent neural network core, e.g. RNN, GRU or LSTM (Li et al., 2015). To aggregate the messages, we use a simple sum which may be alternatively replaced by other commutative operators such as _mean_, _max_ or the attention-based weighted sum (Veliˇckovi´c et al., 2017). Through multiple layers of propagation, the representation for each node will accumulate information in its local neighborhood. 
+Here $`f_{message}`$ is typically an MLP on the concatenated inputs, and $`f_{node}`$ can be either an MLP or a recurrent neural network core, e.g. RNN, GRU or LSTM (Li et al., 2015). To aggregate the messages, we use a simple sum which may be alternatively replaced by other commutative operators such as _mean_, _max_ or the attention-based weighted sum (Veliˇckovi´c et al., 2017). Through multiple layers of propagation, the representation for each node will accumulate information in its local neighborhood. 
 
 <img src="../res/GMN - Graph Matching Networks for Learning the Similarity of Graph Structured Objects_Figure2.png" width=50%>
 
