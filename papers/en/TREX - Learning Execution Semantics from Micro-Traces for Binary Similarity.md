@@ -16,7 +16,7 @@ We evaluate TREX on 1,472,066 function binaries from 13 popular software project
 
 ## 1. INTRODUCTION
 
-<span id="page-0-0"></span>Semantic function similarity, which quantifies the behavioral similarity between two functions, is a fundamental program analysis capability with a broad spectrum of real-world security usages, such as vulnerability detection [\[12\]](#page-14-0), exploit generation [\[5\]](#page-14-1), tracing malware lineage [\[7\]](#page-14-2), [\[41\]](#page-14-3), and forensics [\[49\]](#page-15-0). For example, OWASP lists "using components with known vulnerabilities" as one of the top-10 application security risks in 2020 [\[56\]](#page-15-1). Therefore, identifying similar vulnerable functions in massive software projects can save significant manual effort.
+Semantic function similarity, which quantifies the behavioral similarity between two functions, is a fundamental program analysis capability with a broad spectrum of real-world security usages, such as vulnerability detection [\[12\]](#page-14-0), exploit generation [\[5\]](#page-14-1), tracing malware lineage [\[7\]](#page-14-2), [\[41\]](#page-14-3), and forensics [\[49\]](#page-15-0). For example, OWASP lists "using components with known vulnerabilities" as one of the top-10 application security risks in 2020 [\[56\]](#page-15-1). Therefore, identifying similar vulnerable functions in massive software projects can save significant manual effort.
 
 When matching semantically similar functions for securitycritical applications (*e.g.,* vulnerability discovery), we often have to deal with software at *binary level*, such as commercial off-the-shelf products (*i.e.,* firmware images) and legacy programs. However, this task is challenging, as the functions' highlevel information (*e.g.,* data structure definitions) are removed during the compilation process. Establishing semantic similarity gets even harder when the functions are compiled to run on different instruction set architectures with various compiler optimizations or obfuscated with simple transformations.
 
@@ -28,7 +28,7 @@ For instance, consider the following pair of x86 instructions: mov eax,2;lea ecx
 
 ![](../res/TREX%20-%20Learning%20Execution%20Semantics%20from%20Micro-Traces%20for%20Binary%20Similarity_page_1_Figure_0.jpeg)
 
-<span id="page-1-0"></span>Fig. 1. The workflow of TREX. We first pretrain the model on the functions' micro-traces, consisting of both instructions and dynamic values, using the masked LM task. We then finetune the pretrained model on the semantically similar function (only static instruction) pairs by stacking new neural network layers for function similarity tasks. Finetuning updates both the pretrained model and the stacked layers. During inference, the finetuned model computes the function embedding, whose distance encodes the function similarity.
+Fig. 1. The workflow of TREX. We first pretrain the model on the functions' micro-traces, consisting of both instructions and dynamic values, using the masked LM task. We then finetune the pretrained model on the semantically similar function (only static instruction) pairs by stacking new neural network layers for function similarity tasks. Finetuning updates both the pretrained model and the stacked layers. During inference, the finetuned model computes the function embedding, whose distance encodes the function similarity.
 
 **Limitations of existing dynamic approaches.** Existing dynamic approaches try to avoid the issues described above by directly comparing the dynamic behaviors of functions to determine similarity. As finding program inputs reaching the target functions is an extremely challenging and timeconsuming task, the prior works perform under-constrained dynamic execution by initializing the function input states (*e.g.,* registers, memory) with random values and executing the target functions directly [\[27\]](#page-14-7). Unfortunately, using such under-constrained execution traces directly to compute function similarities often result in many false positives [\[25\]](#page-14-4). For example, providing random inputs to two different functions with strict input checks might always trigger similar shallow exception handling codes and might look spuriously similar.
 
@@ -48,7 +48,7 @@ We evaluate TREX on 1,472,066 functions collected from 13 popular open-source so
 
 ## 2. OVERVIEW
 
-<span id="page-2-0"></span>In this section, we use the real-world functions as motivating examples to describe the challenges of matching semantically similar functions. We then overview our approach, focusing on how our pretraining task (masked LM) addresses the challenges.
+In this section, we use the real-world functions as motivating examples to describe the challenges of matching semantically similar functions. We then overview our approach, focusing on how our pretraining task (masked LM) addresses the challenges.
 
 ### 2.1. Challenging Cases
 
@@ -70,9 +70,9 @@ Note that pretraining with masked LM does not need any manual labeling effort, a
 
 **Masking register.** Consider the functions in Figure [2c,](#page-3-3) where they essentially increment the value at stack location [rbp-0x2c] by 1. The upper function directly loads the value to eax, increments by 1, and stores the value in eax back to stack. The lower function, by contrast, takes a convoluted way by first letting ecx to hold the value -1, and decrements eax by ecx, and stores the value in eax back to stack.
 
-<span id="page-3-1"></span>![](../res/TREX%20-%20Learning%20Execution%20Semantics%20from%20Micro-Traces%20for%20Binary%20Similarity_page_3_Figure_0.jpeg)
+![](../res/TREX%20-%20Learning%20Execution%20Semantics%20from%20Micro-Traces%20for%20Binary%20Similarity_page_3_Figure_0.jpeg)
 
-<span id="page-3-0"></span>Fig. 2. Challenging cases of matching semantically similar functions across different instruction architectures, optimizations, and obfuscations. (Left) the function priv\_encode\_gost is from libcrypto.a in openssl-1.0.1f. The upper function is compiled to x86 while the lower is compiled to ARM. (Middle) the function <wd\_comparator> is from basenc in coreutils-8.32. The upper and lower function is compiled by GCC-7.5 with -O0 and -O3, respectively. (Right) the function <CMS\_add0\_cert> is from libcrypto.a in openssl-1.0.1u. The upper function is compiled using clang with default options. The lower function is compiled by turning on the instruction substitution using Hikari [\[78\]](#page-15-8), *e.g.,* -mllvm -enable-subobf.
+Fig. 2. Challenging cases of matching semantically similar functions across different instruction architectures, optimizations, and obfuscations. (Left) the function priv\_encode\_gost is from libcrypto.a in openssl-1.0.1f. The upper function is compiled to x86 while the lower is compiled to ARM. (Middle) the function <wd\_comparator> is from basenc in coreutils-8.32. The upper and lower function is compiled by GCC-7.5 with -O0 and -O3, respectively. (Right) the function <CMS\_add0\_cert> is from libcrypto.a in openssl-1.0.1u. The upper function is compiled using clang with default options. The lower function is compiled by turning on the instruction substitution using Hikari [\[78\]](#page-15-8), *e.g.,* -mllvm -enable-subobf.
 
 We mask the eax at line 3 in the upper function. We find that our pretrained model can correctly predict its name and dynamic value. This implies the model understands the semantics of add and can deduce the value of eax in line 3 after observing the value of eax in line 2 (before the addition takes the effect). We also find the model can recover the values of masked ecx in line 4 and eax in line 5, implying the model understands the execution effect of xor and sub.
 
@@ -101,7 +101,7 @@ Register      r  ::= {pc, sp, eax, r0, $a0, ...}
 Const         c  ::= {true, false, 0x0, 0x1, ...}
 ```
 
-<span id="page-4-0"></span>Fig. 3. Low-level IR for representing assembly code. The IR abstracts away the actual assembly syntax that are disparate across different architectures.
+Fig. 3. Low-level IR for representing assembly code. The IR abstracts away the actual assembly syntax that are disparate across different architectures.
 
 
 ## 4. METHODOLOGY
@@ -116,7 +116,7 @@ We implement micro-execution by Godefroid [\[34\]](#page-14-9) to handle x64, AR
 
 Notably, we denote memory reads and writes by load(e) and store(ev, ea) (*i.e.,* store the value expression e<sup>v</sup> to address expression ea), which generalize from both the loadstore architecture (*i.e.,* ARM, MIPS) and register-memory architecture (*i.e.,* x86). Both operations can take as input e – an expression that can be an explicit hexadecimal number (denoting the address or a constant), a register, or a result of an operation on two registers. We use jmp to denote the general jump instruction, which can be both direct or indirect jump (*i.e.,* the expression e<sup>a</sup> can be a constant c or a register r). The jump instruction can also be unconditional or conditional. Therefore, the first parameter in jmp is the conditional expression e<sup>c</sup> and unconditional jump will set e<sup>c</sup> to true. We represent function invocations and returns by call and ret, where call is parameterized by an expression, which can be an address (direct call) or a register (indirect call).
 
-## <span id="page-4-2"></span>Algorithm 1 Micro-tracing a function f
+**Algorithm 1 Micro-tracing a function f**
 
 ```
 Input: Function binary f. All registers r.
@@ -168,7 +168,7 @@ We take special treatment of numerical values appear in the assembly code. Treat
 
 ![](../res/TREX%20-%20Learning%20Execution%20Semantics%20from%20Micro-Traces%20for%20Binary%20Similarity_page_5_Figure_6.jpeg)
 
-<span id="page-5-1"></span>Fig. 4. Model architecture with input-output example. The masked input is marked in gray. In pretraining, the loss function consists of the cross-entropy losses of both (1) code prediction and (2) value prediction, where the value prediction consists of predicting each of the 8 bytes of the micro-trace value.
+Fig. 4. Model architecture with input-output example. The masked input is marked in gray. In pretraining, the loss function consists of the cross-entropy losses of both (1) code prediction and (2) value prediction, where the value prediction consists of predicting each of the 8 bytes of the micro-trace value.
 
 ### 4.3. Pretraining with Micro-traces
 
@@ -186,7 +186,6 @@ As masked LM trains on micro-traces without requiring additional labels, it is f
 
 Let  $m(E_i)$  denote the embedding of the masked  $x_i$  and  $\mathbb{MP}$  a set of positions on which the masks are applied. The model  $g_p$  (to be pretrained) takes as input a sequence of embeddings with random tokens masked:  $(E_1,...,m(E_i),...,E_n), i \in \mathbb{MP}$ , and predicts the code and the values of the masked tokens:  $\{\hat{x}_{f_i}, \hat{v}_i | i \in \mathbb{MP}\} = g_p(E_1,...,m(E_i),...,E_n)$ . Let  $g_p$  be parameterized by  $\theta$ , the objective of training  $g_p$  is thus to search for  $\theta$  that minimizes the cross-entropy losses between (1) the predicted masked code tokens and the actual code tokens, and (2) predicted masked values (8 bytes) and the actual values. For ease of exposition, we omit summation over all samples in the training set.
 
-<span id="page-6-1"></span>
 $$\underset{\theta}{\arg\min} \sum_{i=1}^{|\mathbb{MP}|} (-x_{f_i} \log(\hat{x}_{f_i}) + \alpha \sum_{j=1}^{8} -x_{t_{ij}} \log(\hat{x}_{t_{ij}})) \quad (1)$$
 
  $\hat{x}_{t_{ij}}$  denotes the predicted *j*-th byte of  $x_{t_i}$  (the *i*-th token in  $x_t$ ).  $\alpha$  is a hyperparameter that weighs the cross-entropy losses between predicting code tokens and predicting values.
@@ -207,13 +206,16 @@ $$g_t(E_k) = tanh((\sum_{i=1}^{n} E_{k,i})/n) \cdot W_1) \cdot W_2$$
 
 Here  $W_1 \in \mathbb{R}^{d_{emb} \times d_{emb}}$  and  $W_2 \in \mathbb{R}^{d_{emb} \times d_{func}}$  transforms the average of last self-attention layers embeddings  $E_k$  with dimension  $d_{emb}$  into the function embedding with the dimension  $d_{func}$ .  $d_{func}$  is often chosen smaller than  $d_{emb}$  to support efficient large-scale function searching [77]. Now let  $g_t$  be parameterized by  $\theta$ , the finetuning objective is to minimize the cosine embedding loss  $(l_{ce})$  between the ground-truth and the cosine distance between two function embeddings:
 
-
-
 $$\underset{\theta}{arg \ min} \ l_{ce}(g_t(E_k^{(1)}), g_t(E_k^{(2)}), y)$$
 
 where
 
-$$l_{ce}(x_1, x_2, y) = \begin{cases} 1 - \cos(x_1, x_2) & y = 1\\ \max(0, \cos(x_1, x_2) - \xi) & y = -1 \end{cases}$$
+$l_{ce}(x_1, x_2, y) =
+\begin{cases}
+1 - \cos(x_1, x_2), & y = 1 \\
+\max(0, \cos(x_1, x_2) - \xi), & y = -1
+\end{cases}$
+
  (2)
 
  $\xi$  is the margin usually chosen between 0 and 0.5 [59]. As both  $g_p$  and  $g_t$  are neural nets, optimizing Equation 1 and Equation 2 can be guided by gradient descent via backpropagation.
@@ -222,14 +224,11 @@ After finetuning  $g_t$ , the 2-layer multilayer perceptrons, and  $g_p$ , the p
 
 ## 5. IMPLEMENTATION AND EXPERIMENTAL SETUP
 
-<span id="page-6-3"></span>We implement TREX using fairseq, a sequence modeling toolkit [55], based on PyTorch 1.6.0 with CUDA 10.2 and CUDNN 7.6.5. We run all experiments on a Linux server running Ubuntu 18.04, with an Intel Xeon 6230 at 2.10GHz with 80 virtual cores including hyperthreading, 385GB RAM, and 8 Nvidia RTX 2080-Ti GPUs.
+We implement TREX using fairseq, a sequence modeling toolkit [55], based on PyTorch 1.6.0 with CUDA 10.2 and CUDNN 7.6.5. We run all experiments on a Linux server running Ubuntu 18.04, with an Intel Xeon 6230 at 2.10GHz with 80 virtual cores including hyperthreading, 385GB RAM, and 8 Nvidia RTX 2080-Ti GPUs.
 
 **Datasets.** To train and evaluate TREX, we collect 13 popular open-source software projects. These projects include Binutils-2.34, Coreutils-8.32, Curl-7.71.1, Diffutils-3.7, Findutils-4.7.0, GMP-6.2.0, ImageMagick-7.0.10, Libmicrohttpd-0.9.71, LibTomCrypt-1.18.2, OpenSSL-1.0.1f and OpenSSL-1.0.1u, PuTTy-0.74, SQLite-3.34.0, and Zlib-1.2.11. We compile these projects into 4 architectures *i.e.*, x86, x64, ARM (32-bit), and MIPS (32-bit), with 4 optimization levels (OPT), *i.e.*, O0, O1, O2, and O3, using GCC-7.5. Specifically, we compile the software projects based on its makefile, by specifying CFLAGS (to set optimization flag), CC (to set cross-compiler), and --host (to set the cross-compilation target architecture). We always compile to dynamic shared objects, but resort to static linking when we encounter build errors. We are able to compile all projects with these treatments.
 
 TABLE I NUMBER OF FUNCTIONS FOR EACH PROJECT ACROSS 4 ARCHITECTURES WITH 4 OPTIMIZATION LEVELS AND 5 OBFUSCATIONS.
-
-# TABLE 1
-## NUMBER OF FUNCTIONS FOR EACH PROJECT ACROSS 4 ARCHITECTURES WITH 4 OPTIMIZATION LEVELS AND 5 OBFUSCATIONS.
 
 | ARCH | OPT/OBF | Binutils | Coreutils | Curl | Diffutils | Findutils | GMP | ImageMagick | Libmicrohttpd | LibTomCrypt | OpenSSL | PuTTy | SQLite | Zlib | Total |
 |------|---------|----------|-----------|------|-----------|-----------|-----|-------------|---------------|-------------|---------|-------|--------|------|-------|
@@ -283,25 +282,25 @@ We keep the pretrained model weights that achieve the best validation PPL for fi
 
 **Finetuning setup.** We choose 50,000 random function pairs for each project and randomly select *only 10%* for training, and the remaining is used as the testing set. We keep the training and testing functions *strictly non-duplicated* by ensuring the functions that appear in training function pairs not appear in the testing. As opposed to the typical train-test split (*e.g.,* 80% training and 20% testing [\[50\]](#page-15-2)), our setting requires the model to generalize from few training samples to a large number of unseen testing samples, which alleviates the possibility of overfitting. Moreover, we keep the ratio between similar and dissimilar function pairs in the finetuning set as roughly 1:5. This setting follows the practice of contrastive learning [\[15\]](#page-14-18), [\[70\]](#page-15-9), respecting the actual distribution of similar/dissimilar functions as the number of dissimilar functions is often larger than that of similar functions in practice.
 
-<span id="page-8-0"></span>TABLE II TREX RESULTS (IN AUC SCORE) ON FUNCTION PAIRS ACROSS ARCHITECTURES, OPTIMIZATIONS, AND OBFUSCATIONS.
+TABLE II TREX RESULTS (IN AUC SCORE) ON FUNCTION PAIRS ACROSS ARCHITECTURES, OPTIMIZATIONS, AND OBFUSCATIONS.
 
-|               |       | Cross |       |              |                      |  |  |  |
-|---------------|-------|-------|-------|--------------|----------------------|--|--|--|
-|               | ARCH  | OPT   | OBF   | ARCH+<br>OPT | ARCH+<br>OPT+<br>OBF |  |  |  |
-| Binutils      | 0.993 | 0.993 | 0.991 | 0.959        | 0.947                |  |  |  |
-| Coreutils     | 0.991 | 0.992 | 0.991 | 0.956        | 0.945                |  |  |  |
-| Curl          | 0.993 | 0.993 | 0.991 | 0.958        | 0.956                |  |  |  |
-| Diffutils     | 0.992 | 0.992 | 0.990 | 0.970        | 0.961                |  |  |  |
-| Findutils     | 0.990 | 0.992 | 0.990 | 0.965        | 0.963                |  |  |  |
-| GMP           | 0.992 | 0.993 | 0.990 | 0.968        | 0.966                |  |  |  |
-| ImageMagick   | 0.993 | 0.993 | 0.989 | 0.960        | 0.951                |  |  |  |
-| Libmicrohttpd | 0.994 | 0.994 | 0.991 | 0.972        | 0.969                |  |  |  |
-| LibTomCrypt   | 0.992 | 0.994 | 0.991 | 0.981        | 0.970                |  |  |  |
-| OpenSSL       | 0.992 | 0.992 | 0.989 | 0.964        | 0.956                |  |  |  |
-| PuTTy         | 0.992 | 0.995 | 0.990 | 0.961        | 0.952                |  |  |  |
-| SQLite        | 0.991 | 0.994 | 0.993 | 0.980        | 0.959                |  |  |  |
-| Zlib          | 0.990 | 0.991 | 0.990 | 0.979        | 0.965                |  |  |  |
-| Average       | 0.992 | 0.993 | 0.990 | 0.967        | 0.958                |  |  |  |
+|               |       | Cross |       |              |                      |
+|---------------|-------|-------|-------|--------------|----------------------|
+|               | ARCH  | OPT   | OBF   | ARCH+<br>OPT | ARCH+<br>OPT+<br>OBF |
+| Binutils      | 0.993 | 0.993 | 0.991 | 0.959        | 0.947                |
+| Coreutils     | 0.991 | 0.992 | 0.991 | 0.956        | 0.945                |
+| Curl          | 0.993 | 0.993 | 0.991 | 0.958        | 0.956                |
+| Diffutils     | 0.992 | 0.992 | 0.990 | 0.970        | 0.961                |
+| Findutils     | 0.990 | 0.992 | 0.990 | 0.965        | 0.963                |
+| GMP           | 0.992 | 0.993 | 0.990 | 0.968        | 0.966                |
+| ImageMagick   | 0.993 | 0.993 | 0.989 | 0.960        | 0.951                |
+| Libmicrohttpd | 0.994 | 0.994 | 0.991 | 0.972        | 0.969                |
+| LibTomCrypt   | 0.992 | 0.994 | 0.991 | 0.981        | 0.970                |
+| OpenSSL       | 0.992 | 0.992 | 0.989 | 0.964        | 0.956                |
+| PuTTy         | 0.992 | 0.995 | 0.990 | 0.961        | 0.952                |
+| SQLite        | 0.991 | 0.994 | 0.993 | 0.980        | 0.959                |
+| Zlib          | 0.990 | 0.991 | 0.990 | 0.979        | 0.965                |
+| Average       | 0.992 | 0.993 | 0.990 | 0.967        | 0.958                |
 
 **Hyperparameters.** We pretrain and finetune the models for 10 epochs and 30 epochs, respectively. We choose α = 0.125 in Equation [1](#page-6-1) such that the cross-entropy loss of code prediction and value prediction have the same weight. We pick ξ = 0.1 in Equation [2](#page-6-2) to make the model slightly inclined to treat functions as dissimilar because functions in practice are mostly dissimilar. We fix the largest input length to be 512 and split the functions longer than this length into subsequences for pretraining. We average the subsequences' embeddings during finetuning if the function is split to more than one subsequences. In this paper, we keep most of the hyperparameters fixed throughout the evaluation if not mentioned explicitly (complete hyperparameters are defined in Appendix [B\)](#page-16-0). While we can always search for better hyperparameters, there is no principled method to date [\[9\]](#page-14-19). We thus leave as future work a more thorough study of TREX's hyperparameters.
 
@@ -334,11 +333,11 @@ As shown in Figure 5, our ROC curve is higher than those reported in SAFE and Ge
 
 ![](../res/TREX%20-%20Learning%20Execution%20Semantics%20from%20Micro-Traces%20for%20Binary%20Similarity_page_9_Figure_7.jpeg)
 
-<span id="page-9-1"></span>Fig. 5. ROC curves of matching functions in OpenSSL across different architectures. TREX outperforms the reported results of SAFE and Gemini and the results of running SAFE's trained model on our testing set.
+Fig. 5. ROC curves of matching functions in OpenSSL across different architectures. TREX outperforms the reported results of SAFE and Gemini and the results of running SAFE's trained model on our testing set.
 
 ![](../res/TREX%20-%20Learning%20Execution%20Semantics%20from%20Micro-Traces%20for%20Binary%20Similarity_page_9_Figure_9.jpeg)
 
-<span id="page-9-2"></span>Fig. 6. Comparison between TREX and SAFE on matching functions in each project compiled to different architectures (see Table 1).
+Fig. 6. Comparison between TREX and SAFE on matching functions in each project compiled to different architectures (see Table 1).
 
 Figure 6 shows that TREX consistently outperforms SAFE on all projects, *i.e.*, by 7.3% on average. As the SAFE's model is only trained on OpenSSL, we also follow the same setting by training TREX on only OpenSSL, similar to the cross-project setting described in Section VI-A.
 
@@ -348,47 +347,39 @@ Table III shows TREX outperforms Asm2Vec in Precision@1 (by 7.2% on average) on 
 
 To compare to Blex, we evaluate TREX on Coreutils between optimizations 00 and 03, where they report to achieve better performance than BinDiff [79]. As Blex show the matched functions of each individual utility in Coreutils in a barchart without including the concrete numbers of matched functions, we estimate their matched functions using their reported average percentage (75%) on all utilities.
 
-<span id="page-10-0"></span>TABLE III
+TABLE III. COMPARISON BETWEEN TREX AND ASM2VEC (IN PRECISION@1) ON FUNCTION PAIRS ACROSS OPTIMIZATIONS.
 
-COMPARISON BETWEEN TREX AND ASM2VEC (IN PRECISION@1) ON
-FUNCTION PAIRS ACROSS OPTIMIZATIONS.
-
-|             |       | Cross Compile | er Optimization |         |  |  |
-|-------------|-------|---------------|-----------------|---------|--|--|
-|             | 02    | and 03        | 00 and 03       |         |  |  |
-|             | TREX  | Asm2Vec       | TREX            | Asm2Vec |  |  |
-| Coreutils   | 0.955 | 0.929         | 0.913           | 0.781   |  |  |
-| Curl        | 0.961 | 0.951         | 0.894           | 0.850   |  |  |
-| GMP         | 0.974 | 0.973         | 0.886           | 0.763   |  |  |
-| ImageMagick | 0.971 | 0.971         | 0.891           | 0.837   |  |  |
-| LibTomCrypt | 0.991 | 0.991         | 0.923           | 0.921   |  |  |
-| OpenSSL     | 0.982 | 0.931         | 0.914           | 0.792   |  |  |
-| PuTTy       | 0.956 | 0.891         | 0.926           | 0.788   |  |  |
-| SQLite      | 0.931 | 0.926         | 0.911           | 0.776   |  |  |
-| Zlib        | 0.890 | 0.885         | 0.902           | 0.722   |  |  |
-| Average     | 0.957 | 0.939         | 0.907           | 0.803   |  |  |
+|             | TREX (O2,O3) | Asm2Vec (O2, O3) | TREX (O0,O3) | Asm2Vec (O0,O3)   |
+|-------------|-------|---------------|-----------------|---------|
+| Coreutils   | 0.955 | 0.929         | 0.913           | 0.781   |
+| Curl        | 0.961 | 0.951         | 0.894           | 0.850   |
+| GMP         | 0.974 | 0.973         | 0.886           | 0.763   |
+| ImageMagick | 0.971 | 0.971         | 0.891           | 0.837   |
+| LibTomCrypt | 0.991 | 0.991         | 0.923           | 0.921   |
+| OpenSSL     | 0.982 | 0.931         | 0.914           | 0.792   |
+| PuTTy       | 0.956 | 0.891         | 0.926           | 0.788   |
+| SQLite      | 0.931 | 0.926         | 0.911           | 0.776   |
+| Zlib        | 0.890 | 0.885         | 0.902           | 0.722   |
+| Average     | 0.957 | 0.939         | 0.907           | 0.803   |
 
 ![](../res/TREX%20-%20Learning%20Execution%20Semantics%20from%20Micro-Traces%20for%20Binary%20Similarity_page_10_Figure_2.jpeg)
 
-<span id="page-10-1"></span>Fig. 7. Cross-optimization function matching between ○0 and ○3 on Coreutils by TREX and Blex. We sort the 109 utility binaries in Coreutils by their number of functions, and aggregate the matched functions every 10 utilities.
+Fig. 7. Cross-optimization function matching between ○0 and ○3 on Coreutils by TREX and Blex. We sort the 109 utility binaries in Coreutils by their number of functions, and aggregate the matched functions every 10 utilities.
 
 Figure 7 shows that TREX consistently outperforms Blex in number of matched functions in all utility programs of Coreutils. Note that Blex also executes the function and uses the dynamic features to match binaries. The observation here thus implies that the learned execution semantics from TREX is more effective than the hand-coded features in Blex for matching similar binaries.
 
 **Cross-obfuscation search.** We compare TREX to Asm2Vec on matching obfuscated function binaries with different obfuscation methods. Notably, Asm2Vec is evaluated on obfuscations including bogus control flow (bcf), control flow flattening (cff), and instruction substitution (sub), which are subset of our evaluated obfuscations (Table I). As Asm2Vec only evaluates on 4 projects, *i.e.*, GMP, ImageMagic, LibTomCrypt, and OpenSSL, we focus on these 4 projects and TREX's results for other projects are included in Table II.
 
-Table IV shows TREX achieves better Precision@1 score (by 14.3% on average) throughout all different obfuscations. Importantly, the last two rows show when multiple obfuscations are combined, TREX performance is not dropping as significant as Asm2Vec. It also shows TREX remains robust under varying obfuscations with different difficulties. For example, instruction substitution simply replaces very limited instructions (*i.e.*, arithmetic operations as shown in Section II) while control flow
+Table IV shows TREX achieves better Precision@1 score (by 14.3% on average) throughout all different obfuscations. Importantly, the last two rows show when multiple obfuscations are combined, TREX performance is not dropping as significant as Asm2Vec. It also shows TREX remains robust under varying obfuscations with different difficulties. For example, instruction substitution simply replaces very limited instructions (*i.e.*, arithmetic operations as shown in Section II) while control flow flattening dramatically changes the function code. Asm2Vec has 12.2% decreased score when the obfuscation is changed from sub to ccf, while TREX only decreases by 4%.
 
-<span id="page-10-2"></span>TABLE IV
-
-COMPARISON BETWEEN TREX AND ASM2VEC (IN PRECISION@1) ON
-FUNCTION PAIRS ACROSS DIFFERET OBFUSCATIONS.
+TABLE IV. COMPARISON BETWEEN TREX AND ASM2VEC (IN PRECISION@1) ON FUNCTION PAIRS ACROSS DIFFERET OBFUSCATIONS.
 
 |     |         | GMP   | LibTomCrypt | ImageMagic | OpenSSL | Average |
 |-----|---------|-------|-------------|------------|---------|---------|
 | bcf | TREX    | 0.926 | 0.938       | 0.934      | 0.898   | 0.924   |
 |     | Asm2Vec | 0.802 | 0.920       | 0.933      | 0.883   | 0.885   |
-| ccf |         | 0.943 |             | 0.936      | 0.940   | 0.930   |
-| CCI | Asm2Vec | 0.772 | 0.920       | 0.890      | 0.795   | 0.844   |
+| ccf | TREX    | 0.943 | 0.931       | 0.936      | 0.940   | 0.930   |
+|     | Asm2Vec | 0.772 | 0.920       | 0.890      | 0.795   | 0.844   |
 | sub | TREX    | 0.949 | 0.962       | 0.981      | 0.980   | 0.968   |
 |     | Asm2Vec | 0.940 | 0.960       | 0.981      | 0.961   | 0.961   |
 | All | TREX    | 0.911 | 0.938       | 0.960      | 0.912   | 0.930   |
@@ -396,9 +387,7 @@ FUNCTION PAIRS ACROSS DIFFERET OBFUSCATIONS.
 
 ![](../res/TREX%20-%20Learning%20Execution%20Semantics%20from%20Micro-Traces%20for%20Binary%20Similarity_page_10_Figure_10.jpeg)
 
-<span id="page-10-3"></span>Fig. 8. Runtime performance (lower is better) of TREX, SAFE, and Gemini on (a) function parsing and (b) embedding generation. The time is log-scaled.
-
-flattening dramatically changes the function code. Asm2Vec has 12.2% decreased score when the obfuscation is changed from sub to ccf, while TREX only decreases by 4%.
+Fig. 8. Runtime performance (lower is better) of TREX, SAFE, and Gemini on (a) function parsing and (b) embedding generation. The time is log-scaled.
 
 ### C. RQ3: Execution Time
 
@@ -408,7 +397,7 @@ Particularly, we compare the runtime of two procedures in matching functions. (1
 
 ![](../res/TREX%20-%20Learning%20Execution%20Semantics%20from%20Micro-Traces%20for%20Binary%20Similarity_page_11_Figure_0.jpeg)
 
-<span id="page-11-0"></span>Fig. 9. Comparison of testing AUC scores between models pretrained with different fraction of the pretraining set.
+Fig. 9. Comparison of testing AUC scores between models pretrained with different fraction of the pretraining set.
 
 Figure 8 shows that TREX is more efficient than the other tools in both function parsing and embedding generation for functions from 4 different projects with different number of functions (Table I). Gemini requires manually constructing control flow graph and extracting inter-/intra-basic-block feature engineering. It thus incurs the largest overhead. For generating function embeddings, our underlying network architectures leverage Transformer self-attention layers, which is more amenable to parallezation with GPU than the recurrent (used by SAFE) and graph neural network (used by Gemini) [75]. As a result, TREX runs up to 8× faster than SAFE and Gemini.
 
@@ -424,11 +413,11 @@ Figure 9 shows that the model's AUC score drops significantly (on average 15.7%)
 
 ![](../res/TREX%20-%20Learning%20Execution%20Semantics%20from%20Micro-Traces%20for%20Binary%20Similarity_page_11_Figure_8.jpeg)
 
-<span id="page-11-1"></span>Fig. 10. Comparison of testing AUC scores between models pretrained with micro-trace and pretrained without micro-trace.
+Fig. 10. Comparison of testing AUC scores between models pretrained with micro-trace and pretrained without micro-trace.
 
 ![](../res/TREX%20-%20Learning%20Execution%20Semantics%20from%20Micro-Traces%20for%20Binary%20Similarity_page_11_Figure_10.jpeg)
 
-<span id="page-11-2"></span>Fig. 11. Testing PPL of pretraining TREX in 10 epochs. We compare different designs of combining byte-sequence in the micro-trace (see Section IV-B).
+Fig. 11. Testing PPL of pretraining TREX in 10 epochs. We compare different designs of combining byte-sequence in the micro-trace (see Section IV-B).
 
 Figure 10 shows that the AUC scores decrease by 7.2% when the model is pretrained without micro-trace. The AUC score of pretrained TREX without micro-traces is even 0.035 lower than that of SAFE. However, the model still performs reasonably well, achieving 0.88 AUC scores even when the functions can come from arbitrary architectures, optimizations, and obfuscations. Moreover, we observe that pretraining without micro-traces has less performance drop than the model simply not pretrained (7.2% vs. 15.7%). This demonstrates that even pretraining with only static assembly code is indeed helpful to improve matching functions. One possible interpretation is that similar functions are statically similar in syntax, while understanding their inherently similar execution semantics just further increases the similarity score.
 
@@ -436,9 +425,7 @@ Figure 10 shows that the AUC scores decrease by 7.2% when the model is pretraine
 
 The green line in Figure 11 shows the validation PPL in 10 epochs of pretraining TREX. The testing set is constructed by sampling 10,000 random functions from the projects used in pretraining (as described in Section V). We observe that the PPL of TREX drops to close to 2.1, which is far below that of random guessing (e.g., random guessing PPL is  $2^{-\log(1/256)} = 256$ ), indicating that TREX has around 0.48 confidence on average on the masked tokens being the correct value. Note that a random guessing has only 1/256=0.004 confidence on the masked tokens being the correct value.
 
-<span id="page-12-0"></span>TABLE V
-VULNERABILITIES WE HAVE CONFIRMED (✓) IN FIRMWARE IMAGES
-(LATEST VERSION) FROM 4 WELL-KNOWN VENDORS AND PRODUCTS.
+TABLE V. VULNERABILITIES WE HAVE CONFIRMED (✓) IN FIRMWARE IMAGES (LATEST VERSION) FROM 4 WELL-KNOWN VENDORS AND PRODUCTS.
 
 |                | Ubiquiti | TP-Link  | NETGEAR  | Linksys  |
 |----------------|----------|----------|----------|----------|
@@ -470,9 +457,7 @@ We crawl firmware images (in their latest version) in 180 products including WLA
 
 We extract the firmware images using binwalk [23]. In total, we collect 180 number of firmware images from 22 vendors.
 
-<span id="page-12-1"></span>TABLE VI
-WE STUDY 16 VULNERABILITIES FROM OPENSSL AND BUSYBOX, TWO
-WIDELY-USED LIBRARIES IN FIRMWARE IMAGES.
+TABLE VI. WE STUDY 16 VULNERABILITIES FROM OPENSSL AND BUSYBOX, TWO WIDELY-USED LIBRARIES IN FIRMWARE IMAGES.
 
 | CVE            | Library | Description                    |
 |----------------|---------|--------------------------------|
