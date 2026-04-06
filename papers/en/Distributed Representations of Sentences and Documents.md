@@ -1,8 +1,8 @@
 # [Distributed Representations of Sentences and Documents](https://cs.stanford.edu/~quocle/paragraph_vector.pdf)
 
-**Quoc Le** QVL@GOOGLE.COM **Tomas Mikolov** TMIKOLOV@GOOGLE.COM
-
-Google Inc, 1600 Amphitheatre Parkway, Mountain View, CA 94043
+- **Quoc Le** QVL@GOOGLE.COM 
+- **Tomas Mikolov** TMIKOLOV@GOOGLE.COM
+- Google Inc, 1600 Amphitheatre Parkway,Mountain View, CA 94043
 
 ## Abstract
 
@@ -12,11 +12,7 @@ Many machine learning algorithms require the input to be represented as a fixed-
 
 Text classification and clustering play an important role in many applications, e.g, document retrieval, web search, spam filtering. At the heart of these applications is machine learning algorithms such as logistic regression or Kmeans. These algorithms typically require the text input to be represented as a fixed-length vector. Perhaps the most common fixed-length vector representation for texts is the bag-of-words or bag-of-n-grams (Harris, 1954) due to its simplicity, efficiency and often surprising accuracy.
 
-However, the bag-of-words (BOW) has many disadvan-
-
-*Proceedings of the* 31 st *International Conference on Machine Learning*, Beijing, China, 2014. JMLR: W&CP volume 32. Copyright 2014 by the author(s).
-
-tages. The word order is lost, and thus different sentences can have exactly the same representation, as long as the same words are used. Even though bag-of-n-grams considers the word order in short context, it suffers from data sparsity and high dimensionality. Bag-of-words and bagof-n-grams have very little sense about the semantics of the words or more formally the distances between the words. This means that words "powerful," "strong" and "Paris" are equally distant despite the fact that semantically, "powerful" should be closer to "strong" than "Paris."
+However, the bag-of-words (BOW) has many disadvantages. The word order is lost, and thus different sentences can have exactly the same representation, as long as the same words are used. Even though bag-of-n-grams considers the word order in short context, it suffers from data sparsity and high dimensionality. Bag-of-words and bagof-n-grams have very little sense about the semantics of the words or more formally the distances between the words. This means that words "powerful," "strong" and "Paris" are equally distant despite the fact that semantically, "powerful" should be closer to "strong" than "Paris."
 
 In this paper, we propose *Paragraph Vector*, an unsupervised framework that learns continuous distributed vector representations for pieces of texts. The texts can be of variable-length, ranging from sentences to documents. The name Paragraph Vector is to emphasize the fact that the method can be applied to variable-length pieces of texts, anything from a phrase or sentence to a large document.
 
@@ -38,13 +34,11 @@ This section introduces the concept of distributed vector representation of word
 
 In this framework, every word is mapped to a unique vector, represented by a column in a matrix W. The column is indexed by position of the word in the vocabulary. The concatenation or sum of the vectors is then used as features for prediction of the next word in a sentence.
 
-More formally, given a sequence of training words  $w_1, w_2, w_3, ..., w_T$ , the objective of the word vector model
-
 ![](../res/Distributed%20Representations%20of%20Sentences%20and%20Documents_page_1_Picture_10.jpeg)
 
 Figure 1. A framework for learning word vectors. Context of three words ("the," "cat," and "sat") is used to predict the fourth word ("on"). The input words are mapped to columns of the matrix W to predict the output word.
 
-is to maximize the average log probability
+More formally, given a sequence of training words  $w_1, w_2, w_3, ..., w_T$ , the objective of the word vector model is to maximize the average log probability
 
 $$\frac{1}{T} \sum_{t=k}^{T-k} \log p(w_t | w_{t-k}, ..., w_{t+k})$$
 
@@ -55,7 +49,6 @@ $$p(w_t|w_{t-k},...,w_{t+k}) = \frac{e^{y_{w_t}}}{\sum_i e^{y_i}}$$
 Each of  $y_i$  is un-normalized log-probability for each output word i, computed as
 
 $$y = b + Uh(w_{t-k}, ..., w_{t+k}; W)$$
- (1)
 
 where U,b are the softmax parameters. h is constructed by a concatenation or average of word vectors extracted from W.
 
@@ -63,9 +56,7 @@ In practice, hierarchical softmax (Morin & Bengio, 2005; Mnih & Hinton, 2008; Mi
 
 The neural network based word vectors are usually trained using stochastic gradient descent where the gradient is obtained via backpropagation (Rumelhart et al., 1986). This type of models is commonly known as neural language models (Bengio et al., 2006). A particular implementation of neural network based algorithm for training the word vectors is available at code.google.com/p/word2vec/ (Mikolov et al., 2013a).
 
-After the training converges, words with similar meaning are mapped to a similar position in the vector space. For
-
-example, "powerful" and "strong" are close to each other, whereas "powerful" and "Paris" are more distant. The difference between word vectors also carry meaning. For example, the word vectors can be used to answer analogy questions using simple vector algebra: "King" - "man" + "woman" = "Queen" (Mikolov et al., 2013d). It is also possible to learn a linear matrix to translate words and phrases between languages (Mikolov et al., 2013b).
+After the training converges, words with similar meaning are mapped to a similar position in the vector space. For example, "powerful" and "strong" are close to each other, whereas "powerful" and "Paris" are more distant. The difference between word vectors also carry meaning. For example, the word vectors can be used to answer analogy questions using simple vector algebra: "King" - "man" + "woman" = "Queen" (Mikolov et al., 2013d). It is also possible to learn a linear matrix to translate words and phrases between languages (Mikolov et al., 2013b).
 
 These properties make word vectors attractive for many natural language processing tasks such as language modeling (Bengio et al., 2006; Mikolov, 2012), natural language understanding (Collobert & Weston, 2008; Zhila et al., 2013), statistical machine translation (Mikolov et al., 2013b; Zou et al., 2013), image understanding (Frome et al., 2013) and relational extraction (Socher et al., 2013a).
 
@@ -81,9 +72,7 @@ The paragraph token can be thought of as another word. It acts as a memory that 
 
 The contexts are fixed-length and sampled from a sliding window over the paragraph. The paragraph vector is shared across all contexts generated from the same paragraph but not across paragraphs. The word vector matrix W, however, is shared across paragraphs. I.e., the vector for "powerful" is the same for all paragraphs.
 
-The paragraph vectors and word vectors are trained using
-
-stochastic gradient descent and the gradient is obtained via backpropagation. At every step of stochastic gradient descent, one can sample a fixed-length context from a random paragraph, compute the error gradient from the network in Figure 2 and use the gradient to update the parameters in our model.
+The paragraph vectors and word vectors are trained using stochastic gradient descent and the gradient is obtained via backpropagation. At every step of stochastic gradient descent, one can sample a fixed-length context from a random paragraph, compute the error gradient from the network in Figure 2 and use the gradient to update the parameters in our model.
 
 At prediction time, one needs to perform an inference step to compute the paragraph vector for a new paragraph. This is also obtained by gradient descent. In this step, the parameters for the rest of the model, the word vectors W and the softmax weights, are fixed.
 
@@ -121,7 +110,7 @@ For sentiment analysis, we use two datasets: Stanford sentiment treebank dataset
 
 We also test our method on an information retrieval task, where the goal is to decide if a document should be retrieved given a query.
 
-### **3.1. Sentiment Analysis with the Stanford Sentiment Treebank Dataset**
+### 3.1. Sentiment Analysis with the Stanford Sentiment Treebank Dataset
 
 **Dataset:** This dataset was first proposed by (Pang & Lee, 2005) and subsequently extended by (Socher et al., 2013b) as a benchmark for sentiment analysis. It has 11855 sentences taken from the movie review site Rotten Tomatoes.
 
@@ -143,31 +132,20 @@ At test time, we freeze the vector representation for each word, and learn the r
 
 In our experiments, we cross validate the window size using the validation set, and the optimal window size is 8. The vector presented to the classifier is a concatenation of two vectors, one from PV-DBOW and one from PV-DM. In PV-DBOW, the learned vector representations have 400 dimensions. In PV-DM, the learned vector representations have 400 dimensions for both words and paragraphs. To predict the 8-th word, we concatenate the paragraph vectors and 7 word vectors. Special characters such as ,.!? are treated as a normal word. If the paragraph has less than 9 words, we pre-pad with a special NULL word symbol.
 
-**Results:** We report the error rates of different methods in Table 1. The first highlight for this Table is that bag-ofwords or bag-of-n-grams models (NB, SVM, BiNB) perform poorly. Simply averaging the word vectors (in a bagof-words fashion) does not improve the results. This is because bag-of-words models do not consider how each sentence is composed (e.g., word ordering) and therefore fail to recognize many sophisticated linguistic phenomena, for instance sarcasm. The results also show that
+**Results:** We report the error rates of different methods in Table 1. The first highlight for this Table is that bag-ofwords or bag-of-n-grams models (NB, SVM, BiNB) perform poorly. Simply averaging the word vectors (in a bagof-words fashion) does not improve the results. This is because bag-of-words models do not consider how each sentence is composed (e.g., word ordering) and therefore fail to recognize many sophisticated linguistic phenomena, for instance sarcasm. The results also show that more advanced methods (such as Recursive Neural Network (Socher et al., 2013b)), which require parsing and take into account the compositionality, perform much better.
 
 Table 1. The performance of our method compared to other approaches on the Stanford Sentiment Treebank dataset. The error rates of other methods are reported in (Socher et al., 2013b).
 
-| Model                           | Error rate | Error rate |
-|---------------------------------|------------|------------|
-|                                 | (Positive/ | (Fine      |
-|                                 | Negative)  | grained)   |
-|                                 |            |            |
-| Na¨ıve Bayes                    | 18.2 %     | 59.0%      |
-| (Socher et al., 2013b)          |            |            |
-| SVMs (Socher et al., 2013b)     | 20.6%      | 59.3%      |
-| Bigram Na¨ıve Bayes             | 16.9%      | 58.1%      |
-| (Socher et al., 2013b)          |            |            |
-| Word Vector Averaging           | 19.9%      | 67.3%      |
-| (Socher et al., 2013b)          |            |            |
-| Recursive Neural Network        | 17.6%      | 56.8%      |
-| (Socher et al., 2013b)          |            |            |
-| Matrix Vector-RNN               | 17.1%      | 55.6%      |
-| (Socher et al., 2013b)          |            |            |
-| Recursive Neural Tensor Network | 14.6%      | 54.3%      |
-| (Socher et al., 2013b)          |            |            |
-| Paragraph Vector                | 12.2%      | 51.3%      |
-
-more advanced methods (such as Recursive Neural Network (Socher et al., 2013b)), which require parsing and take into account the compositionality, perform much better.
+| Model                                           | Error rate (Positive/Negative) | Error rate (Fine-grained) |
+|-------------------------------------------------|------------|------------|
+| Na¨ıve Bayes (Socher et al., 2013b)             | 18.2 %     | 59.0%      |
+| SVMs (Socher et al., 2013b)                     | 20.6%      | 59.3%      |
+| Bigram Na¨ıve Bayes (Socher et al., 2013b)      | 16.9%      | 58.1%      |
+| Word Vector Averaging (Socher et al., 2013b)    | 19.9%      | 67.3%      |
+| Recursive Neural Network (Socher et al., 2013b) | 17.6%      | 56.8%      |
+| Matrix Vector-RNN (Socher et al., 2013b)        | 17.1%      | 55.6%      |
+| Recursive Neural Tensor Network (Socher et al., 2013b) | 14.6%      | 54.3%      |
+| Paragraph Vector                                | **12.2%**      | **51.3%**      |
 
 Our method performs better than all these baselines, e.g., recursive networks, despite the fact that it does not require parsing. On the coarse-grained classification task, our method has an absolute improvement of 2.4% in terms of error rates. This translates to 16% relative improvement.
 
@@ -224,10 +202,7 @@ From such collection, we derive a new dataset to test vector representations of 
 
 Here is a sample of three paragraphs, where the first paragraph should be closer to the second paragraph than the third paragraph:
 
-• **Paragraph 1:** calls from ( 000 ) 000 - 0000 . 3913 calls reported from this number . according to 4 reports the identity of this caller is american airlines .
-
-<sup>1</sup> In our experiments, the neural network did perform better than a linear logistic classifier in this task.
-
+- **Paragraph 1:** calls from ( 000 ) 000 - 0000 . 3913 calls reported from this number . according to 4 reports the identity of this caller is american airlines .
 - **Paragraph 2:** do you want to find out who called you from +1 000 - 000 - 0000 , +1 0000000000 or ( 000 ) 000 - 0000 ? see reports and share information you have about this caller
 - **Paragraph 3:** allina health clinic patients for your convenience , you can pay your allina health clinic bill online . pay your clinic bill now , question and answers...
 
